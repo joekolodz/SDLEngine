@@ -1,0 +1,21 @@
+{
+    "terminal.integrated.profiles.windows": {
+      "cmder": {
+        "path": "C:\\WINDOWS\\System32\\cmd.exe",
+        "args": ["/K", "C:\\ProgramData\\Cmder\\vendor\\bin\\vscode_init.cmd"]
+      }
+    },
+    "terminal.integrated.defaultProfile.windows": "cmder",
+    "files.associations": {
+      "*.conf": "lua",
+      "ios": "cpp",
+      "iosfwd": "cpp",
+      "istream": "cpp",
+      "ostream": "cpp",
+      "string": "cpp",
+      "xiosbase": "cpp",
+      "xlocale": "cpp",
+      "xstring": "cpp",
+      "*.rh": "cpp"
+    }
+  }

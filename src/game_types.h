@@ -28,9 +28,19 @@ struct game_window
     SDL_GLContext glContext;
 };
 
+enum button_states
+{
+    SNone,
+    SPressed,
+    SReleased,
+    SHeld
+};
+
 struct game_controller_button_state
 {
     bool isDown;
+    bool wasDown;
+    button_states state;
 };
 
 struct game_controller

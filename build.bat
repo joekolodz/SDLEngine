@@ -7,8 +7,8 @@ echo ===========================
 REM If you want to try to get the tasks.json (CTRL+SHIFT+B) working use the tasks.json file in the root .vscode folder not the src/.vscode folder. should just delete the second one
 REM
 REM Need to run the vcvars batch file for each instance of VSCode or launch VSCode from the developer command prompt (which already ran vsvars)
-REM This is where the compiler gets setup:
-REM "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
+REM This is where the compiler gets setup: (include quotes when copying)
+rem call "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
 REM
 REM cl.exe found here: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.28.29910\\bin\\Hostx64\\x64\\"
 
@@ -65,10 +65,11 @@ REM cl.exe %commonCompilerFlags% ..\src\win32_handmade.cpp /link -subsystem:wind
 ECHO 64-bit build
 REM optimization switches: /O2 /Oi /fp:fast
 REM cl.exe %commonCompilerFlags% ..\src\SDLTest.cpp -LD /link -incremental:no -PDB:SDLTest_%random%.pdb
-cl.exe %commonCompilerFlags% src\image.cpp src\game_types.cpp src\recording.cpp src\game.cpp src\SDLEngine.cpp /link %commonLinkerFlags% /out:bin\SDLEngine.exe
+cl.exe %commonCompilerFlags% imgui\imgui_impl_sdl2.cpp imgui\imgui_impl_opengl3.cpp imgui\imgui_draw.cpp imgui\imgui_tables.cpp imgui\imgui_widgets.cpp imgui\imgui.cpp src\image.cpp src\game_types.cpp src\recording.cpp src\game.cpp src\SDLEngine.cpp /link %commonLinkerFlags% /out:bin\SDLEngine.exe
 REM cl.exe %commonCompilerFlags% src\SDLTest.cpp /link /LIBPATH:D:\Development\SDLTest\lib /SUBSYSTEM:WINDOWS
 
 
+REM "D:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.35.32215/bin/Hostx64/x64/cl.exe" %commonCompilerFlags% imgui\imgui_impl_sdl2.cpp imgui\imgui_impl_opengl3.cpp imgui\imgui_draw.cpp imgui\imgui_tables.cpp imgui\imgui_widgets.cpp imgui\imgui.cpp src\image.cpp src\game_types.cpp src\recording.cpp src\game.cpp src\SDLEngine.cpp /link %commonLinkerFlags% /out:bin\SDLEngine.exe
 
 
 

@@ -19,6 +19,9 @@ struct movement_component
     vector2 sumOfForces;
     float mass;
     vector2 velocity;
+    float momentum;
+    vector2 forwardCoast;
+    bool isForward;
 };
 
 struct animation_component

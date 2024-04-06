@@ -23,10 +23,14 @@
 uint64 _performanceCounterFrequency;
 float _targetSecondsPerFrame = 1.0f / (float)gameUpdateHz;
 uint64 _lastframeTimeStart;
-float _workProessInput;
+float _workProcessInput;
 float _workGameState;
 float _workRender;
 float _deltaTimeSeconds;
+float _frameTimeElapsedSeconds;
+float _fps;
+float _lockedfps;
+float _lockedFrameTimeElapsedSeconds;
 
 const int CONTROL_BOX_HEIGHT = 29;
 const int USE_FULL_SCREEN = false;
@@ -40,12 +44,15 @@ file_info exeFileInfo = {};
 game_input inputState = {};
 InputRecordState _recordingState = None;
 SDL_RWops *_recordingFile;
-SDL_RWops *titsup;
 
-float GetSecondsElapsed(uint64 startTicks, uint64 endTicks)
+//
+// ImGui
+//
+ImGuiIO *_ioMetrics;
+
+float GetElapsedSeconds(uint64 startTicks, uint64 endTicks)
 {
-    uint64 difference = endTicks - startTicks;
-    return (float)difference / _performanceCounterFrequency / 1000;
+    return (endTicks - startTicks) / (float)_performanceCounterFrequency;
 }
 
 void GetDesktopResolution(uint32 &horizontal, uint32 &vertical)
@@ -334,48 +341,36 @@ void EngineProcessInputs()
         SDL_Log("Read input: %d", inputState.windowEvent.key.keysym.sym);
     }
 
-    _workProessInput = GetSecondsElapsed(startWork, SDL_GetPerformanceCounter()) * 1000.0f;
+    _workProcessInput = GetElapsedSeconds(startWork, SDL_GetPerformanceCounter()) * 1000.0f;
 }
 
 void EngineUpdateAndRenderFrame()
 {
     uint64 startWork = SDL_GetPerformanceCounter();
     GameUpdate(_gameWindow, inputState, _deltaTimeSeconds);
-    _workRender = GetSecondsElapsed(startWork, SDL_GetPerformanceCounter()) * 1000.0f;
+    _workRender = GetElapsedSeconds(startWork, SDL_GetPerformanceCounter()) * 1000.0f;
 }
 
 static void CalculateTiming()
 {
-    uint64 frameTimeEnd = SDL_GetPerformanceCounter();
-    float frameTimeElapsed = GetSecondsElapsed(_lastframeTimeStart, frameTimeEnd);
-    float work = frameTimeElapsed * 1000.0f;
+    // https://gafferongames.com/post/fix_your_timestep/
 
-    float sleepTime = 0.0f;
-    uint64 sleepTimeStart = SDL_GetPerformanceCounter();
-    while (frameTimeElapsed < _targetSecondsPerFrame)
-    {
-        frameTimeEnd = SDL_GetPerformanceCounter();
-        frameTimeElapsed = GetSecondsElapsed(_lastframeTimeStart, frameTimeEnd);
-        // SDL_Log("%f %f", frameTimeElapsed, _targetSecondsPerFrame);
-    }
-    SDL_Log(" == Out == ");
+    _frameTimeElapsedSeconds = GetElapsedSeconds(_lastframeTimeStart, SDL_GetPerformanceCounter());
+    _fps = 1.0f / _frameTimeElapsedSeconds;
 
-    sleepTime = GetSecondsElapsed(sleepTimeStart, SDL_GetPerformanceCounter()) * 1000.0f;
+    Uint32 sleep = (Uint32)floor(1000.0f * ((_targetSecondsPerFrame)-_frameTimeElapsedSeconds));
+    SDL_Delay(sleep);
 
-    float fps = 1.0f / frameTimeElapsed;
+    _lockedFrameTimeElapsedSeconds = GetElapsedSeconds(_lastframeTimeStart, SDL_GetPerformanceCounter());
+    _lockedfps = 1.0f / _lockedFrameTimeElapsedSeconds;
 
-    _deltaTimeSeconds = frameTimeElapsed;
-    if (_deltaTimeSeconds > 0.04f)
-    {
-        _deltaTimeSeconds = 0.04f;
-    }
-
+    _deltaTimeSeconds = _frameTimeElapsedSeconds;
     _lastframeTimeStart = SDL_GetPerformanceCounter();
     // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "\nFrame Complete");
-    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, " - Input Work:%fms", _workProessInput);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, " - Input Work:%fms", _workProcessInput);
     // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, " - GameState Work:%fms", _workGameState);
     // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, " - Render Work:%fms", _workRender);
-    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, " - Total Work:%fms, Slept for %fms, d(T): %fs, Frame Time:%fms, FPS:%f", work, sleepTime, _deltaTimeSeconds, frameTimeElapsed * 1000.0f, fps);
+    // SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, " - Slept for %fms, d(T): %fs, Frame Time:%fms, FPS:%f", work, sleepTime, _deltaTimeSeconds, frameTimeElapsed * 1000.0f, _fps);
 }
 
 void Shutdown()
@@ -560,10 +555,23 @@ void Draw()
 bool show_demo_window = true;
 bool show_another_window = false;
 ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-ImGuiIO io = {};
 
 void ProcessImGui()
 {
+    // ImGui Syyle
+    ImGuiStyle &style = ImGui::GetStyle();
+    style.WindowRounding = 4.0;
+    auto &colors = style.Colors;
+
+    ImVec4(&titsup)[53] = style.Colors;
+
+    colors[ImGuiCol_WindowBg] = ImColor(5, 0, 0, 1);
+    colors[ImGuiCol_Button] = ImColor(18, 18, 18, 100);
+    colors[ImGuiCol_ButtonActive] = ImColor(21, 21, 21, 100);
+
+    titsup[ImGuiCol_WindowBg] = ImColor(5, 0, 0, 1);
+    titsup[ImGuiCol_Button] = ImColor(18, 18, 18, 100);
+    titsup[ImGuiCol_ButtonActive] = ImColor(21, 21, 21, 100);
 
     ImGui_ImplSDL2_ProcessEvent(&inputState.windowEvent);
 
@@ -574,7 +582,7 @@ void ProcessImGui()
     static float f = 0.0f;
     static int counter = 0;
 
-    ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
+    ImGui::Begin("Hello, world!", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove);
 
     ImGui::Text("This is some useful text.");          // Display some text (you can use a format strings too)
     ImGui::Checkbox("Demo Window", &show_demo_window); // Edit bools storing our window open/close state
@@ -587,12 +595,17 @@ void ProcessImGui()
         counter++;
     ImGui::SameLine();
     ImGui::Text("counter = %d", counter);
+    // ImGui::Text("Fame Time = %d", (int)(_frameTimeElapsed * 1000.0f));
 
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+    ImGui::Text("GUI average %.3f ms/frame (%.1f FPS)", 1000.0f / _ioMetrics->Framerate, _ioMetrics->Framerate);
+    ImGui::Text("Engine %.1f FPS (%.1f locked)", _fps, _lockedfps);
+    ImGui::Text("Engine %.3f ms/frame (%.3f locked)", _frameTimeElapsedSeconds * 1000.0f, _lockedFrameTimeElapsedSeconds * 1000.0f);
+
     ImGui::End();
 
     if (show_another_window)
     {
+        ImGui::SetNextWindowSize({200, 50});
         ImGui::Begin("Another Window", &show_another_window); // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
         ImGui::Text("Hello from another window!");
         if (ImGui::Button("Close Me"))
@@ -641,8 +654,10 @@ int main(int argc, char *argv[])
     ImGui_ImplSDL2_InitForOpenGL(_gameWindow.window, _gameWindow.glContext);
     ImGui_ImplOpenGL3_Init(glsl_version);
     ImGui::StyleColorsDark();
-    io = ImGui::GetIO();
-    //(void)io;
+    _ioMetrics = &ImGui::GetIO();
+    //(void)_ioMetrics;
+
+    _lastframeTimeStart = SDL_GetPerformanceCounter();
 
     while (_isStopRequested == false)
     {
@@ -672,7 +687,7 @@ int main(int argc, char *argv[])
 
         SDL_GL_SwapWindow(_gameWindow.window);
 
-        // CalculateTiming();
+        CalculateTiming();
     }
 
     ImGui_ImplOpenGL3_Shutdown();

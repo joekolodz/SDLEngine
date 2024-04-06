@@ -10,7 +10,7 @@ REM Need to run the vcvars batch file for each instance of VSCode or launch VSCo
 REM This is where the compiler gets setup: (include quotes when copying)
 rem call "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
 REM
-REM cl.exe found here: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.28.29910\\bin\\Hostx64\\x64\\"
+REM cl.exe found here: "D:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.35.32215\bin\Hostx64\x64"
 
 rem set commonCompilerFlags=-Fm -Gm- -MT -Od -Oi -W4 -WX -wd4201 -wd4100 -wd4189 -DHANDMADE_INTERNAL=1 -DHANDMADE_SLOW=1 -DHANDMADE_WIN32=1 -nologo -FC -Z7
 rem set commonLinkerFlags=-opt:ref user32.lib gdi32.lib winmm.lib
